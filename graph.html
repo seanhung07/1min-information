@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="canonical" href="https://getbootstrap.com/docs/4.0/examples/dashboard/">
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+    <!-- Custom styles for this template -->
+    <link href="dashboard.css" rel="stylesheet">
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script> -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/bootstrap-table@1.16.0/dist/bootstrap-table.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script>
+        function process_data(data) {
+            minx = data['bid_mean']
+            maxx = data['ask_mean']
+            console.log(data['bid_histogram'])
+            b = []
+            for (var k in data['bid_histogram']) {
+                x = parseFloat(k)
+                if (x <= minx || x >= maxx)
+                    continue
+                b.push({x: parseFloat(k), y: data['bid_histogram'][k]})
+            }
+            a = []
+            for (var k in data['ask_histogram']) {
+                x = parseFloat(k)
+                if (x <= minx || x >= maxx)
+                    continue
+                a.push({x: parseFloat(k), y: data['ask_histogram'][k]})
+            }
+            return [a, b]
+        }
+        window.onload = function () {
+            $.getJSON('http://149.248.61.181:5000/orderbook?symbol=btcusdt', function(data) {
+                [a, b] = process_data(data)
+                var chart = new CanvasJS.Chart("chartContainer", {
+                    animationEnabled: true,
+                    
+                    title:{
+                        text:"Bid&Ask histogram"
+                    },
+                    axisX:{
+                        interval: 1,
+                        labelFormatter: function(){
+                            return " ";
+                        }
+                    },
+                    axisY2:{
+                        interlacedColor: "rgba(1,77,101,.2)",
+                        gridColor: "rgba(1,77,101,.1)",
+                        logarithmic: true
+                    },
+                    data: [{
+                        type: "bar",
+                        name: "bids",
+                        axisYType: "secondary",
+                        color: "#79f261",
+                        dataPoints: b
+                    },{
+                        type: "bar",
+                        name: "bids",
+                        axisYType: "secondary",
+                        color: "#f05841",
+                        dataPoints: a
+                    }]
+                });
+                chart.render();
+                setInterval(function() {
+                    $.getJSON('http://149.248.61.181:5000/orderbook?symbol=btcusdt', function(data) {
+                        [a, b] = process_data(data);
+                        chart.options.data[0].dataPoints = b; 
+                        chart.options.data[1].dataPoints = a; 
+                        chart.render();
+                    });
+                }, 1000)
+            });
+            
+        }
+    </script>
+</head>
+<body>
+    <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
+        <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">1min</a>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+        <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+            <div class="sidebar-sticky">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                <a class="nav-link" href="index.html">
+                    <span data-feather="home"></span>
+                    Dashboard <span class="sr-only">(current)</span>
+                </a>
+                <a class="nav-link active" href="graph.html">
+                    Bid & Ask
+                </a>
+                </li>
+            </ul>
+            </div>
+        </nav>
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+              <h1 class="h2">Bid & Ask histogram</h1>
+            </div>
+                <div id="chartContainer" style="height: 370px; width: 100%;"></div>
+          </main>
+<script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+</body>
+</html>
